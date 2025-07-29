@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TT-Spectrum Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- audio element -->
+    <audio id="audio" controls crossorigin></audio>
+    <div class="analyzer-panel">
+        <!-- Műszer fejléc -->
+        <div class="header">
+            <h1 class="title">TT<span class="bold">-Spectrum</span> <span class="bold">Analyzer</span></h1>
+            <div class="frequency-display">
+                Frequency range: <span id="minFreq"></span> to <span id="maxFreq"></span> Hz
+            </div>
+        </div>
+        
+        <!-- Kijelző (spektrum analizátor) -->
+        <div class="display-container">
+            <div id="container"></div>
+            
+        </div>
+        <div class="zoom-info">(Use mouse wheel to zoom in/out; click and drag to move)</div>
+        <!-- Kezelőgombok -->
+        <div class="controls">
+            <div class="button-group">
+                <div class="input-column">
+                    <div class="input-label">Input source</div>
+                    <button id="mic" class="control-button" data-active="0">MIC</button>
+                    <button id="input1" class="control-button" data-active="0">Input I.</button>
+                    <button id="input2" class="control-button" data-active="0">Input II.</button>
+                    <button id="input3" class="control-button" data-active="0">Input III.</button>
+                </div>
+                <div class="controls-column">
+                    <div class="volume-column">
+                        <div class="input-label">Volume</div>
+                        <div class="volume-control">
+                            <input type="range" id="volumeSlider" min="0" max="2" step="0.1" value="1" class="volume-slider">
+                            <div class="volume-display">
+                                <span id="volumeValue">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-column">
+                        <div class="input-label">MAX DECIBELS</div>
+                        <div class="volume-control">
+                            <input type="range" id="maxDecibelSlider" min="-40" max="0" step="1" value="-40" class="volume-slider">
+                            <div class="volume-display">
+                                <span id="maxDecibelValue">-40 dB</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="volume-column">
+                        <div class="input-label">MIN DECIBELS</div>
+                        <div class="volume-control">
+                            <input type="range" id="minDecibelSlider" min="-120" max="-60" step="1" value="-120" class="volume-slider">
+                            <div class="volume-display">
+                                <span id="minDecibelValue">-120 dB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="styles-column">
+                    <div class="input-label">Display styles</div>
+                    <button id="style1" class="control-button" data-active="1">Style I.</button>
+                            <button id="style2" class="control-button" data-active="0">Style II.</button>
+                            <button id="style3" class="control-button" data-active="0">Style III.</button>
+                            <button id="style4" class="control-button" data-active="0">Style IV.</button>
+                            <button id="style5" class="control-button" data-active="0">Style V.</button>
+                            <button id="style6" class="control-button" data-active="0">Style VI.</button>
+                </div>
+                <div class="display-functions-column">
+                    <div class="input-label">Display functions</div>
+                    <button id="scaleX" class="control-button" data-active="1">SCALE X</button>
+                    <button id="scaleY" class="control-button" data-active="1">SCALE Y</button>
+                    <button id="peakline" class="control-button" data-active="0">Peakline</button>
+                    <button id="peakmosaic" class="control-button" data-active="0">Peakmosaic</button>
+                    <button id="showfpw" class="control-button" data-active="0">ShowFPW</button>
+                </div>
+                <button id="freeze" class="control-button" data-active="0">FREEZE</button>
+                <button id="reset" class="control-button">RESET</button>
+            </div>
+            
+            <div class="info">
+                Peak frequencies: <select id="peak-count">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="script.js"></script>
+</body>
+</html>
