@@ -12,6 +12,8 @@
 import AudioMotionAnalyzer from './audioMotion-analyzer.js';
 
 let micStream;
+// Globális változó a MediaElementSourceNode tárolásához
+let audioSource = null;
 
 const micButton = document.getElementById('mic'),
       input1Button = document.getElementById('input1'),
@@ -27,6 +29,7 @@ const micButton = document.getElementById('mic'),
       scaleY = document.getElementById('scaleY'),
       peaklineButton = document.getElementById('peakline'),
       peakmosaicButton = document.getElementById('peakmosaic'),
+      peakFreqButton = document.getElementById('peak-freq'),
       showfpwButton = document.getElementById('showfpw'),
       freezeButton = document.getElementById('freeze'),
       resetButton = document.getElementById('reset'),
@@ -85,21 +88,23 @@ micButton.addEventListener( 'click', () => {
   // Deactivate other input buttons
   input1Button.dataset.active = '0';
   input2Button.dataset.active = '0';
-  
+  input3Button.dataset.active = '0';
+
   micButton.dataset.active = +!+micButton.dataset.active;
   if ( micButton.dataset.active == '1' ) {
     if ( navigator.mediaDevices ) {
       navigator.mediaDevices.getUserMedia( { audio: true, video: false } )
       .then( stream => {
-        // create stream using audioMotion audio context
-        micStream = audioMotion.audioCtx.createMediaStreamSource( stream );
-        // connect microphone stream to analyzer
-        audioMotion.connectInput( micStream );
-        // mute output to prevent feedback loops from the speakers
-        audioMotion.volume = 0;
+        micStream = stream;
+        // Lower the volume for microphone input
+        audioMotion.volume = 0.2;
+        const micSource = audioMotion.audioCtx.createMediaStreamSource( micStream );
+        audioMotion.connectInput( micSource );
+        style1Button.click();
       })
       .catch( err => {
-        alert('Microphone access denied by user');
+        console.log( 'Microphone access denied by user' );
+        micButton.dataset.active = '0';
       });
     }
     else {
@@ -108,7 +113,19 @@ micButton.addEventListener( 'click', () => {
   }
   else {
     // disconnect and release microphone stream
-    audioMotion.disconnectInput( micStream, true );
+    micStream.getTracks().forEach( track => {
+      track.stop();
+      console.log('Microphone off');
+    });
+    audioMotion.volume = 1;
+    
+    // Biztosítjuk, hogy az audioSource létezik, mielőtt használnánk
+    if (!audioSource) {
+      audioSource = audioMotion.audioCtx.createMediaElementSource(audioEl);
+      audioSource.connect(spectrumGainNode);
+      spectrumGainNode.connect(audioMotion.audioCtx.destination);
+    }
+    audioMotion.connectInput(spectrumGainNode); // For spectrum analysis
   }
 });
 
@@ -126,9 +143,12 @@ input1Button.addEventListener( 'click', () => {
     audioEl.crossOrigin = 'anonymous';
     
     // Connect audio through gain node for spectrum amplitude control
-    const audioSource = audioMotion.audioCtx.createMediaElementSource(audioEl);
-    audioSource.connect(spectrumGainNode);
-    spectrumGainNode.connect(audioMotion.audioCtx.destination); // For audio output
+    // Csak akkor hozunk létre új MediaElementSourceNode-ot, ha még nem létezik
+    if (!audioSource) {
+      audioSource = audioMotion.audioCtx.createMediaElementSource(audioEl);
+      audioSource.connect(spectrumGainNode);
+      spectrumGainNode.connect(audioMotion.audioCtx.destination); // For audio output
+    }
     audioMotion.connectInput(spectrumGainNode); // For spectrum analysis
     
     // Restore volume to normal level in case it was muted by microphone
@@ -279,6 +299,15 @@ showfpwButton.addEventListener( 'click', () => {
   console.log('ShowFPW (showFPS):', audioMotion.showFPS ? 'ON' : 'OFF');
 });
 
+// Peak frequencies gomb kezelése
+let showPeakFrequency = false;
+
+peakFreqButton.addEventListener('click', () => {
+  peakFreqButton.dataset.active = +!+peakFreqButton.dataset.active;
+  showPeakFrequency = +peakFreqButton.dataset.active;
+  console.log('Peak frequency display:', showPeakFrequency ? 'ON' : 'OFF');
+});
+
 // toggle analyzer on/off
 freezeButton.addEventListener( 'click', () => {
   freezeButton.dataset.active = +!+freezeButton.dataset.active;
@@ -354,10 +383,9 @@ audioMotion.minDecibels = parseInt(minDecibelSlider.value);
 // minimum distance (in Hz) between two data points for them to be considered different peaks
 const minDistance = 3;
 
-// display peak frequencies
-const elPeakSelect = document.getElementById('peak-count'),
-      ctx      = audioMotion.canvasCtx,
-      canvas   = ctx.canvas,
+// Canvas context for drawing
+const ctx = audioMotion.canvasCtx,
+      canvas = ctx.canvas,
       fontSize = 16;
 
 function analyzeData() {
@@ -369,22 +397,27 @@ function analyzeData() {
   if ( bars[0].value == 0 )
     return;
   
-  ctx.fillStyle = '#fff';
-  ctx.font = `${fontSize}px sans-serif`;
+  // Csak akkor jelenítjük meg a csúcsfrekvenciát a spektrum görbén, ha a Peak frequencies gomb aktív
+  if (showPeakFrequency && peakFreqButton.dataset.active === "1") {
+    ctx.fillStyle = '#fff';
+    ctx.font = `${fontSize}px sans-serif`;
 
-  for ( let i = 0, peaks = [], peakCount = elPeakSelect.value; i < peakCount; i++ ) {
-    const peak = bars[ i ];
+    // Csak a legmagasabb csúcsot jelenítjük meg a vásznon
+    const peak = bars[0];
+    
+    ctx.textAlign = peak.posX < canvas.width * .9 ? 'left' : 'right';
+    const posY = Math.max( fontSize, canvas.height * ( 1 - peak.value ) );
+    ctx.fillText( peak.freqLo.toFixed(2) + 'Hz', peak.posX, posY );
+  }
+  
+  // Ha a Peakmosaic aktív, akkor is rajzolunk a vászonra
+  if (peakmosaicButton.dataset.active === "1") {
+    ctx.fillStyle = '#fff';
+    ctx.font = `${fontSize}px sans-serif`;
 
-    // check if data points are not too close
-    if ( peaks.find( f => Math.abs( peak.freqLo - f ) < minDistance ) ) {
-      if ( peakCount < bars.length )
-        peakCount++;
-      continue; // skip this peak
-    }
-
-    // save this peak
-    peaks.push( peak.freqLo );
-
+    // Csak a legmagasabb csúcsot jelenítjük meg a vásznon
+    const peak = bars[0];
+    
     ctx.textAlign = peak.posX < canvas.width * .9 ? 'left' : 'right';
     const posY = Math.max( fontSize, canvas.height * ( 1 - peak.value ) );
     ctx.fillText( peak.freqLo.toFixed(2) + 'Hz', peak.posX, posY );
