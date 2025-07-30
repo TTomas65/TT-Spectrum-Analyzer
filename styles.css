@@ -34,6 +34,7 @@ body {
   justify-content: space-between;
   padding: 0 2vw;
   border-bottom: 1px solid #444444;
+  flex-wrap: wrap;
 }
 
 .header .title {
@@ -48,12 +49,48 @@ body {
   font-weight: 400;
 }
 
+.header .version {
+  font-size: clamp(10px, 1.5vw, 14px);
+  font-weight: 400;
+  color: #ffc107;
+  opacity: 0.7;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.github-link {
+  margin-left: auto;
+}
+
+.github-button {
+  display: inline-flex;
+  align-items: center;
+  background-color: #24292e;
+  color: #ffffff;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.github-button:hover {
+  background-color: #2c3033;
+  border-color: #ffc107;
+}
+
+.github-icon {
+  fill: #ffffff;
+  margin-right: 6px;
+}
+
 .frequency-display {
   font-size: clamp(12px, 1.5vw, 15px);
   color: #ffc107;
   font-weight: 500;
   white-space: nowrap;
-  padding-top: 30px;
 }
 
 /* Kijelző terület - képernyő felső 2/3-a */
@@ -369,6 +406,21 @@ canvas {
   color: #888888;
   margin: 0;
   font-style: italic;
+}
+
+.zoom-info-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2vw;
+  margin: -1vh 0 1vh;
+}
+
+.zoom-info {
+  text-align: right;
+  font-size: clamp(10px, 1vw, 13px);
+  color: #999;
+  user-select: none;
 }
 
 /* Reszponzív beállítások */
